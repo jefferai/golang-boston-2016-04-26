@@ -1,0 +1,186 @@
+Embedding: Structs and Interfaces
+
+Jeff Mitchell
+HashiCorp
+@jefferai
+
+* Background
+
+* Structs vs. Classes
+
+Many languages have structs, many have classes, many have both
+
+Distinction isn't always large...
+
+* C++ Structs vs. Classes
+
+- Functionally _nearly_ the same
+- Structs default-public and can easily interact with C
+- Classes default-private and create namespaces
+- Both can have methods declared on their types
+
+* OOP
+
+Generally when we think of Object-Oriented Programming what we are _really_ talking about is a type hierarchy, supporting method inheritance and overriding:
+
+  A > B > C
+  class A : B, C
+
+Usually this means classes - an object is a class object, often by design (in C++ for instance, for proper namespacing)
+
+* Go Objects(?)
+
+- Go supports structs but not classes
+- We colloquially refer to "objects" in Go, but we really mean typed data (structs, usually)
+- The key point is that Go does _not_ support a type hierarchy (which "objects" often implies)
+- A type is a type is a type; in C++ terms, you can `static_cast`, but not `dynamic_cast`
+
+* Interfaces
+
+Instead, Go allows a particular type to satisfy _interfaces_
+
+An interface specifies a set of functions that a type must implement:
+
+.code -numbers foomaker/foomaker.go /FOOMAKERSTART OMIT/,/FOOMAKEREND OMIT/
+
+* Interfaces
+
+Code can specify a type without worrying about the underlying implementation:
+
+.play -numbers foomaker/foomaker.go /FOOMAKERPLAYSTART OMIT/,/FOOMAKERPLAYEND OMIT/
+
+* Multiple Interfaces
+
+Any type can satisfy multiple interfaces:
+
+.code -numbers foobarmaker/foobarmaker.go /FOOMAKERSTART OMIT/,/FOOMAKEREND OMIT/
+
+* Multiple Interfaces
+
+Such a type can simply be used in both situations:
+
+.play -numbers foobarmaker/foobarmaker.go /FOOMAKERPLAYSTART OMIT/,/FOOMAKERPLAYEND OMIT/
+
+* Interfaces are Implicit
+
+This is not dissimnilar to Java interfaces, except that you don't need to declare the interfaces you're satisfying (implicit, not explicit)
+
+  public class MyFooBarMaker
+    implements FooMaker, BarMaker {
+
+vs.
+
+* Interface Variables
+
+Go also has interface variables:
+
+  interface{}
+
+ This is mostly distinct from interface types
+
+You can do neat things with them, but it's not covered in this talk
+
+* Struct Embedding
+
+* Struct Embedding
+
+You can embed a struct in another struct and gain its members and functions:
+
+.code -numbers foobarmaker_embedded/foobarmaker_embedded.go /FOOMAKERSTART OMIT/,/FOOMAKEREND OMIT/
+
+* Struct Embedding
+
+Embedded structs can be used to satisfy interfaces:
+
+.play -numbers foobarmaker_embedded/foobarmaker_embedded.go /FOOMAKERPLAYSTART OMIT/,/FOOMAKERPLAYEND OMIT/
+
+* Struct Embedding Tip
+
+Although fields and functions are embedded, you can directly address the overall embedded struct, allowing:
+
+  mfm: MyInnerStruct{ X: "y" }
+  m := MyOuterStruct{ MyInnerStruct: mfm }
+
+and:
+
+  m := MyOuterStruct{}
+  m.MyInnerStruct = MyInnerStruct{ X: "y" }
+
+If you want to pass a struct with an initialized embedded struct directly to a function, you can also directly initialize it:
+
+  doSomething(&MyOuterStruct{
+    MyInnerStruct: MyInnerStruct{
+      X: "y",
+    },
+  })
+
+* Why Embed Structs?
+
+- Code reuse
+- Satisfy interfaces
+- Reuse stateful functions without passing around context - embed the context!
+
+* Interface Embedding
+
+* Interfaces in Interfaces
+
+These are very common in Go stdlib:
+
+  type ReadWriteCloser interface {
+        Reader
+        Writer
+        Closer
+  }
+
+  type ReadWriteSeeker interface {
+        Reader
+        Writer
+        Seeker
+  }
+
+But it's less common to see interfaces embedded in structs
+
+* Flipping the Logic
+
+- An interface type specifies a set of functions that a struct must implement to satisfy the interface type
+- An interface embedded in another interface specifies a set of functions that must be provided to satisfy the overall interface type
+- An interface embedded in a struct specifies a set of functions that must be provided to an instantiation of a struct _to satisfy the struct type_
+
+* Example: 
+
+.code -numbers foobarmaker_interface/foobarmaker_interface.go /FOOMAKERSTART OMIT/,/FOOMAKEREND OMIT/
+
+* Example:
+
+As expected, trying to build the previous slide gives us:
+
+  cannot use MyFooMaker literal (type *MyFooMaker) as type FooMaker in field value:
+        *MyFooMaker does not implement FooMaker (missing MakeFoo method)
+
+* Example:
+
+.play -numbers foobarmaker_interface/foobarmaker_interface.go /FOOMAKERPLAYSTART OMIT/,/FOOMAKERPLAYEND OMIT/
+
+* Why Embed Interfaces?
+
+Cleaner alternative to depending on function pointers
+
+- Compiler will enforce existence of required functions, so you can call without worrying about runtime crashes
+
+* Why Embed Interfaces?
+
+Allows building higher-level logic while ignoring underlying implementation
+
+- Libraries
+- Middleware
+- Hardware support
+
+* Why Embed Interfaces?
+
+Keeps better layered separation of logic
+
+- Lower level implementors do not automatically have access to higher level struct's functions and members -- ensures logic is encapsulated properly
+
+* Why Embed Interfaces?
+
+Ensure requirements are met to satisfy other interfaces!
