@@ -4,6 +4,12 @@ Jeff Mitchell
 HashiCorp
 @jefferai
 
+* Sections
+
+- Background
+- Struct Embedding
+- Interface Embedding
+
 * Background
 
 * Structs vs. Classes
@@ -76,7 +82,7 @@ Go also has interface variables:
 
   interface{}
 
- This is mostly distinct from interface types
+This is mostly distinct from interface types
 
 You can do neat things with them, but it's not covered in this talk
 
@@ -106,6 +112,8 @@ and:
   m := MyOuterStruct{}
   m.MyInnerStruct = MyInnerStruct{ X: "y" }
 
+* Struct Embedding Tip
+
 If you want to pass a struct with an initialized embedded struct directly to a function, you can also directly initialize it:
 
   doSomething(&MyOuterStruct{
@@ -119,6 +127,26 @@ If you want to pass a struct with an initialized embedded struct directly to a f
 - Code reuse
 - Satisfy interfaces
 - Reuse stateful functions without passing around context - embed the context!
+
+* Another Example
+
+This is *super* common:
+
+  type MyRacyType struct {
+    sync.Mutex
+    racyVar map[string]interface{}
+  }
+
+This allows you to do:
+
+  mrt.Lock()
+  // do something
+  mrt.Unlock()
+
+Rather than:
+
+  mrt.mutex.Lock()
+  ...
 
 * Interface Embedding
 
@@ -145,6 +173,11 @@ But it's less common to see interfaces embedded in structs
 - An interface type specifies a set of functions that a struct must implement to satisfy the interface type
 - An interface embedded in another interface specifies a set of functions that must be provided to satisfy the overall interface type
 - An interface embedded in a struct specifies a set of functions that must be provided to an instantiation of a struct _to satisfy the struct type_
+
+Colloquially:
+
+- Embedding structs allow you to decide how your use your struct
+- Embedding interfaces allows someone else to decide how to use your struct
 
 * Example: 
 
@@ -184,3 +217,29 @@ Keeps better layered separation of logic
 * Why Embed Interfaces?
 
 Ensure requirements are met to satisfy other interfaces!
+
+* Final Example
+
+Remember this?
+
+  type MyRacyType struct {
+    sync.RWMutex
+    racyVar map[string]interface{}
+  }
+
+* Final Example
+
+Another model:
+
+  type MyRacyType struct {
+    sync.Locker // interface requiring Lock() and Unlock()
+    racyVar map[string]interface{}
+  }
+
+Now, anyone using MyRacyType can lock it however they want:
+
+- sync.Mutex
+- sync.RWMutex
+- Network lock (in Consul/etcd/ZooKeeper)
+
+Sky's the limit!

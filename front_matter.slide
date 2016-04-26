@@ -1,0 +1,24 @@
+Boston Golang
+2016-04-26
+
+* Thanks to Akamai!
+
+* Who's Hiring?
+
+* Welcome to...
+
+* THE BOSTON GOLANG HASHICORP T-T-T-T-T-TAKEOVER-OVER-OVEr-OVer-Over-over
+
+.image hashicorp-h-black.png _ 500
+
+* We Swear It Was A Coincidence
+
+* The Talks
+
+James Bardin: Go Debugging Tactics
+
+- Techniques for debugging Go programs without a debugger". I intend (still need to determine how long these topics will take) cover how to read stack traces, the various GODEBUG options, extracting data from running programs, and possibly some basic profiling for debugging purposes.
+
+Jeff Mitchell: Embedding
+
+- Many people are aware of and take advantage of embedded structs, but embedded interfaces are much less common. I'll give some background on interface, embedded structs, and how you can use embedded interfaces to take abstraction to the next level and make it much easier to support disparate implementations.
